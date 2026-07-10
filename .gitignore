@@ -1,0 +1,20 @@
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Laravel
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/.env
+
+# Vue
+frontend/node_modules/
+frontend/dist/
+frontend/.env
