@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Event extends Model
 {
-    use HasUuids; // Gera o UUID automaticamente no evento 'creating' do Eloquent
+    use HasUuids;
+    use HasFactory;
 
     protected $fillable = [
         'name',
