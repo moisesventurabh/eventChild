@@ -9,6 +9,7 @@ use App\Enums\RiskLevel;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+
 class EventApiTest extends TestCase
 {
     use RefreshDatabase;
@@ -50,12 +51,10 @@ class EventApiTest extends TestCase
                     'id',
                     'name',
                     'event_type',
-                    'weather_reports' => [
-                        '*' => [
-                            'risk_score',
-                            'risk_level',
-                            'recommendations'
-                        ]
+                    'weather_assessment' => [
+                        'risk_score',
+                        'risk_level',
+                        'recommendations'
                     ]
                 ]
             ]);
@@ -81,13 +80,11 @@ class EventApiTest extends TestCase
     {
         $user = User::factory()->create();
         
-        // Substituído Event::create pelo uso limpo da Factory
         $event = Event::factory()->create([
             'user_id' => $user->id,
             'name' => 'Festival de Inverno',
         ]);
 
-        // 2. Vincular um relatório climático fake a ele[cite: 3]
         $event->weatherReports()->create([
             'temperature' => 15.0,
             'feels_like' => 14.0,
@@ -102,14 +99,29 @@ class EventApiTest extends TestCase
             'raw_data' => []
         ]);
 
-        // 3. Executar o GET na API[cite: 3]
         $response = $this->actingAs($user)
             ->getJson("/api/v1/events/{$event->id}");
 
-        // 4. Asserções[cite: 3]
+        // Asserções ajustadas para o novo formato do Resource
         $response->assertStatus(200)
             ->assertJsonPath('data.name', 'Festival de Inverno')
-            ->assertJsonCount(1, 'data.weather_reports');
+            ->assertJsonPath('data.weather_assessment.temperature', 15);
+    }
+
+    public function test_it_can_list_paginated_events_belonging_to_the_authenticated_user()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        Event::factory()->count(3)->create(['user_id' => $user->id]);
+        Event::factory()->create(['user_id' => $otherUser->id]);
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/v1/events');
+
+        $response->dump(); // <-- Adicione isso aqui para cuspirmos o erro do try/catch
+
+        $response->assertStatus(200);
     }
 
     public function test_it_returns_404_if_event_not_found()
@@ -121,6 +133,61 @@ class EventApiTest extends TestCase
             ->getJson('/api/v1/events/99999');
 
         $response->assertStatus(404);
+    }
+    
+    public function test_it_can_force_refresh_an_event_weather_report()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create([
+            'user_id' => $user->id,
+            'latitude' => -19.9167,
+            'longitude' => -43.9345,
+            'start_at' => now()->addDays(2),
+        ]);
+
+        // Criar o relatório antigo
+        $event->weatherReports()->create([
+            'temperature' => 15.0,
+            'feels_like' => 15.0,
+            'humidity' => 60,
+            'wind_speed' => 10.0,
+            'rain_probability' => 10,
+            'uv_index' => 2,
+            'risk_score' => 10,
+            'risk_level' => RiskLevel::LOW,
+            'recommendations' => json_encode([]),
+            'cached_until' => now()->addHours(2),
+        ]);
+
+        // Criamos o mock explicitamente
+        $weatherMock = \Mockery::mock(\App\Services\Weather\OpenWeatherProvider::class);
+        $weatherMock->shouldReceive('getWeatherCoordinates')
+            ->once()
+            ->andReturn([
+                'temperature' => 32.0,
+                'feels_like' => 30.0,
+                'humidity' => 40,
+                'wind_speed' => 5.0,
+                'rain_probability' => 10,
+                'uv_index' => 8.0,
+            ]);
+
+        // Forçamos o Container a cuspir esse mock quando chamarem a classe
+        $this->app->instance(\App\Services\Weather\OpenWeatherProvider::class, $weatherMock);
+
+        $response = $this->actingAs($user)
+            ->postJson("/api/v1/events/{$event->id}/refresh");
+
+        // Se falhar de novo, remova o comentário abaixo para ver a real mensagem de erro do controller
+        // $response->dump();
+
+        $response->assertStatus(200)
+            ->assertJsonPath('message', 'Relatório climático atualizado com sucesso.');
+
+        $event->refresh();
+
+        $this->assertEquals(2, $event->weatherReports()->count());
+        $this->assertEquals(32.0, $event->weatherReports()->orderBy('id', 'desc')->first()->temperature);
     }
 
 }

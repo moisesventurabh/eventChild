@@ -6,7 +6,9 @@ use Log;
 use App\Models\Event;
 use Illuminate\Console\Command; 
 use App\Services\RiskAssessmentEngine;
+use App\Services\RiskCalculatorService;
 use App\Services\WeatherProviderInterface;
+use App\Services\Weather\OpenWeatherProvider;
 
 class UpdateExpiredWeatherReports extends Command
 {
@@ -35,21 +37,19 @@ class UpdateExpiredWeatherReports extends Command
 
         $this->info("Encontrado(s) {$eventsToUpdate->count()} evento(s) para atualizar.");
 
-        $weatherProvider = app(WeatherProviderInterface::class);
-        $riskEngine = app(RiskAssessmentEngine::class);
+        $weatherProvider = app(OpenWeatherProvider::class);
+        $riskEngine = app(RiskCalculatorService::class);
 
         foreach ($eventsToUpdate as $event) {
             try {
                 $this->comment("Atualizando evento: {$event->name} (#{$event->id})...");
 
-                $weatherData = $weatherProvider->getForecast(
+                $weatherData = $weatherProvider->getWeatherCoordinates(
                     $event->latitude,
-                    $event->longitude,
-                    $event->start_at
+                    $event->longitude
                 );
 
-                $assessment = $riskEngine->calculate($weatherData, $event->event_type);
-
+                $assessment = $riskEngine->calculate($event->event_type, $weatherData);
                 $event->weatherReports()->create([
                     'temperature' => $weatherData['temperature'] ?? null,
                     'feels_like' => $weatherData['feels_like'] ?? $weatherData['temperature'] ?? null,
@@ -69,6 +69,32 @@ class UpdateExpiredWeatherReports extends Command
             } catch (\Exception $e) {
                 $this->error("Erro ao atualizar o evento #{$event->id}: {$e->getMessage()}");
                 Log::error("Schedule Weather Update Error for event #{$event->id}: " . $e->getMessage());
+
+                // ESTRATÉGIA DE FALLBACK:
+                // Se a API falhar, pegamos o relatório mais recente que já estava salvo no banco
+                $lastValidReport = $event->weatherReports()
+                    ->where('id', '!=', $event->weatherReports->sortByDesc('id')->first()?->id ?? 0)
+                    ->latest()
+                    ->first();
+
+                if ($lastValidReport) {
+                    // Duplica o último relatório estendendo o cache por mais 2 horas para evitar telas em branco
+                    $event->weatherReports()->create([
+                        'temperature' => $lastValidReport->temperature,
+                        'feels_like' => $lastValidReport->feels_like,
+                        'humidity' => $lastValidReport->humidity,
+                        'wind_speed' => $lastValidReport->wind_speed,
+                        'rain_probability' => $lastValidReport->rain_probability,
+                        'uv_index' => $lastValidReport->uv_index,
+                        'risk_score' => $lastValidReport->risk_score,
+                        'risk_level' => $lastValidReport->risk_level,
+                        'recommendations' => $lastValidReport->recommendations,
+                        'cached_until' => now()->addHours(2), // Renova a sobrevida do dado antigo
+                        'raw_data' => array_merge($lastValidReport->raw_data ?? [], ['fallback_applied' => true])
+                    ]);
+
+                    $this->warn("Fallback aplicado para o evento #{$event->id}: Mantido o último relatório válido.");
+                }
             }
         }
 

@@ -75,4 +75,46 @@ class UpdateExpiredWeatherReports extends Command
         $this->info('Varredura e atualização finalizadas!');
         return self::SUCCESS;
     }
+
+    public function test_it_applies_fallback_and_extends_cache_when_weather_api_fails()
+    {
+        $user = User::factory()->create();
+
+        // Criar evento com cache expirado
+        $event = Event::factory()->create([
+            'user_id' => $user->id,
+            'start_at' => now()->addDays(2),
+        ]);
+
+        $event->weatherReports()->create([
+            'temperature' => 18.0,
+            'feels_like' => 18.0,
+            'humidity' => 70,
+            'wind_speed' => 5.0,
+            'rain_probability' => 10,
+            'uv_index' => 2,
+            'risk_score' => 15,
+            'risk_level' => RiskLevel::LOW,
+            'recommendations' => json_encode(['Aproveite']),
+            'cached_until' => now()->subHour(), // Expirado
+            'raw_data' => []
+        ]);
+
+        // Mocar a API externa para falhar com Erro 500 ou Timeout
+        Http::fake([
+            'api.openweathermap.org/*' => Http::response(['message' => 'Internal Server Error'], 500)
+        ]);
+
+        // Executar o comando
+        $this->artisan('weather:update-expired')
+            ->assertExitCode(0);
+
+        // O comando não deve ter quebrado. Deve ter criado o segundo registro clonando o anterior por segurança
+        $this->assertEquals(2, $event->weatherReports()->count());
+
+        $latestReport = $event->weatherReports()->latest()->first();
+        $this->assertEquals(18.0, $latestReport->temperature); // Manteve o dado do fallback
+    }
+
 }
+
