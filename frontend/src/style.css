@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --color-void: #8A8A7C;
+  --color-surface: #FBFAF5;
+  --color-elevated: #F0EFE6;
+  --color-elevated-2: #E4E2D4;
+  --color-line: #D8D6C5;
+  --color-line-soft: #E9E7DA;
+
+  --color-text-primary: #211F19;
+  --color-text-secondary: #6E6C5C;
+  --color-text-tertiary: #9A9C8D;
+
+  --color-brand-violet: #7C2FE0;
+  --color-brand-magenta: #D6409F;
+  --color-brand-orange: #FF7A1A;
+
+  --color-risk-low: #1E8F5A;
+  --color-risk-lowBg: rgba(30, 143, 90, 0.10);
+  --color-risk-med: #A9740A;
+  --color-risk-medBg: rgba(169, 116, 10, 0.10);
+  --color-risk-high: #C25B0E;
+  --color-risk-highBg: rgba(194, 91, 14, 0.10);
+  --color-risk-crit: #C7331F;
+  --color-risk-critBg: rgba(199, 51, 31, 0.11);
+
+  --background-image-brand-grad: linear-gradient(135deg, #7C2FE0 0%, #D6409F 55%, #FF7A1A 100%);
+  --background-image-cta-grad: linear-gradient(115deg, #7C2FE0 0%, #FF7A1A 100%);
+
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 900px 520px at 6% -12%, rgba(124, 47, 224, 0.35), transparent 62%),
+    radial-gradient(ellipse 760px 460px at 102% -6%, rgba(255, 122, 26, 0.30), transparent 58%),
+    radial-gradient(ellipse 680px 420px at 50% 108%, rgba(214,64,159,0.16), transparent 60%),
+    #8A8A7C;
+  color: #211F19;
+  min-height: 100vh;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
