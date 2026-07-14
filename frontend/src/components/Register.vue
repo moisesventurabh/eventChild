@@ -29,7 +29,7 @@ async function handleRegister() {
     emit('navigate', 'dash')
   } catch (error) {
     console.error('Erro no registro:', error)
-    errorMessage.value = error.response?.data?.message || 'Erro ao criar conta. Verifique os dados inseridos.'
+    errorMessage.value = error.response?.data?.message || 'Erro ao criar conta. Verifique os dados.'
   } finally {
     isLoading.value = false
   }
@@ -49,7 +49,7 @@ async function handleRegister() {
       <h2 class="font-display font-bold text-xl text-text-primary">Crie sua conta</h2>
       <p class="text-text-secondary text-xs mt-1">Comece a monitorar os riscos do seu evento.</p>
     </div>
-    
+
     <div v-if="errorMessage" class="bg-risk-critBg border border-risk-crit/20 text-risk-crit rounded-xl p-3 text-xs text-center mb-4">
       {{ errorMessage }}
     </div>
