@@ -7,38 +7,30 @@ use App\Enums\RiskLevel;
 
 class RiskCalculatorService
 {
-    /**
-     * Calcula o Score de Risco (0 a 100) e gera recomendações estruturadas.
-     */
+
     public function calculate(EventType $type, array $weatherData): array
     {
         $score = 0;
         $recommendations = [];
 
         if ($type === EventType::OUTDOOR) {
-            // 1. Probabilidade de Chuva (Peso 40%)
             $score += ($weatherData['rain_probability'] ?? 0) * 0.40;
 
-            // 2. Velocidade do Vento (Peso 25%) - teto estipulado em 80km/h para atingir 100% do peso
             $windSpeed = $weatherData['wind_speed'] ?? 0;
             $windFactor = min(($windSpeed / 80) * 100, 100);
             $score += $windFactor * 0.25;
 
-            // Penalidade Multiplicadora para rajadas extremas acima de 40 km/h
             if ($windSpeed > 40) {
                 $score = min($score * 1.2, 100);
             }
 
-            // 3. Índice UV (Peso 20%) - teto estipulado em índice 12
             $uv = $weatherData['uv_index'] ?? 0;
             $uvFactor = min(($uv / 12) * 100, 100);
             $score += $uvFactor * 0.20;
 
-            // 4. Umidade (Peso 15%)
             $humidity = $weatherData['humidity'] ?? 0;
             $score += $humidity * 0.15;
         } else {
-            // Eventos INDOOR mitigam riscos climáticos severamente por padrão de infraestrutura
             $score = 10; 
         }
 

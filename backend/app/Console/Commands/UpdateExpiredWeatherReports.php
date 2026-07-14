@@ -70,15 +70,12 @@ class UpdateExpiredWeatherReports extends Command
                 $this->error("Erro ao atualizar o evento #{$event->id}: {$e->getMessage()}");
                 Log::error("Schedule Weather Update Error for event #{$event->id}: " . $e->getMessage());
 
-                // ESTRATÉGIA DE FALLBACK:
-                // Se a API falhar, pegamos o relatório mais recente que já estava salvo no banco
                 $lastValidReport = $event->weatherReports()
                     ->where('id', '!=', $event->weatherReports->sortByDesc('id')->first()?->id ?? 0)
                     ->latest()
                     ->first();
 
                 if ($lastValidReport) {
-                    // Duplica o último relatório estendendo o cache por mais 2 horas para evitar telas em branco
                     $event->weatherReports()->create([
                         'temperature' => $lastValidReport->temperature,
                         'feels_like' => $lastValidReport->feels_like,

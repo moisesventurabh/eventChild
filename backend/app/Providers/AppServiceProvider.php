@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WeatherProviderInterface::class, function ($app) {
             return new OpenWeatherProvider(
                 apiKey: config('services.openweather.key', 'mock-key'),
-                baseUrl: config('services.openweather.base_url', 'https://api.openweathermap.org/data/2.5/weather')
+                baseUrl: config('services.openweather.base_url', 'https://api.openweathermap.org/data/3.0/onecall')
             );
         });
     }

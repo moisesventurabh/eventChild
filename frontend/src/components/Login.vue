@@ -1,12 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import api from '../services/api' // Importando a nossa instância do Axios
+import api from '../services/api'
 
 const emit = defineEmits(['navigate'])
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
-const errorMessage = ref('') // Para exibir feedbacks de erro do servidor
+const errorMessage = ref('')
 
 async function handleLogin() {
   isLoading.value = true
@@ -18,16 +18,13 @@ async function handleLogin() {
       password: password.value
     })
     
-    // Se o backend retornar um token, salvamos no localStorage
     if (response.data.token) {
       localStorage.setItem('token', response.data.token)
     }
-    
-    // Navega para o dashboard após sucesso
     emit('navigate', 'dash')
+
   } catch (error) {
     console.error('Erro na autenticação:', error)
-    // Captura a mensagem de erro enviada pelo backend ou define uma padrão
     errorMessage.value = error.response?.data?.message || 'Credenciais inválidas ou erro na conexão.'
   } finally {
     isLoading.value = false
@@ -49,7 +46,6 @@ async function handleLogin() {
       <p class="text-text-secondary text-xs mt-1">Insira suas credenciais para verificar seus eventos.</p>
     </div>
 
-    <!-- Alerta de Erro Dinâmico -->
     <div v-if="errorMessage" class="bg-risk-critBg border border-risk-crit/20 text-risk-crit rounded-xl p-3 text-xs text-center mb-4">
       {{ errorMessage }}
     </div>

@@ -3,6 +3,7 @@
 namespace App\Services\Weather;
 
 use RuntimeException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use App\Contracts\WeatherProviderInterface;
 
@@ -15,28 +16,32 @@ class OpenWeatherProvider implements WeatherProviderInterface
 
     public function getWeatherCoordinates(float $latitude, float $longitude): array
     {
-        // Em produção, as credenciais virão via config/env
-        $response = Http::get($baseUrl ?? 'https://api.openweathermap.org/data/2.5/weather', [
+        $response = Http::get($this->baseUrl, [
             'lat' => $latitude,
             'lon' => $longitude,
             'appid' => $this->apiKey,
             'units' => 'metric',
-            'lang' => 'pt_br'
+            'lang' => 'pt_br',
+            'exclude' => 'minutely,hourly,alerts'
         ]);
 
         if ($response->failed()) {
+            Log::error('Erro OpenWeather API 3.0:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            
             throw new RuntimeException('Falha ao consumir provedor de clima externo.');
         }
 
         $data = $response->json();
 
-        // Normalização dos dados: independente da API, o nosso motor recebe este formato
         return [
-            'temperature' => (float) ($data['main']['temp'] ?? 0),
-            'feels_like' => (float) ($data['main']['feels_like'] ?? 0),
-            'humidity' => (int) ($data['main']['humidity'] ?? 0),
-            'wind_speed' => (float) (($data['wind']['speed'] ?? 0) * 3.6), // Convertendo m/s para km/h
-            'rain_probability' => (int) (($data['pop'] ?? 0) * 100), // Algumas APIs trazem de 0 a 1
+            'temperature' => (float) ($data['current']['temp'] ?? 0),
+            'feels_like' => (float) ($data['current']['feels_like'] ?? 0),
+            'humidity' => (int) ($data['current']['humidity'] ?? 0),
+            'wind_speed' => (float) (($data['current']['wind_speed'] ?? 0) * 3.6), // Convertendo m/s para km/h
+            'rain_probability' => (int) (($data['daily'][0]['pop'] ?? 0) * 100), // Percentual real de chuva do dia atual
             'uv_index' => (float) ($data['current']['uvi'] ?? 0.0),
         ];
     }
