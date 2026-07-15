@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import api from '../services/api'
+import axios from 'axios'
+import api, { initializeCSRF } from '../services/api' // Importando a nossa instância do Axios
 
 const emit = defineEmits(['navigate'])
 const email = ref('')
@@ -13,16 +14,18 @@ async function handleLogin() {
   errorMessage.value = ''
   
   try {
+
+    await initializeCSRF() // Obtendo o cookie CSRF
+    
     const response = await api.post('/login', {
       email: email.value,
       password: password.value
-    })
-    
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token)
-    }
+    })    
+    //if (response.data.token) {
+      //localStorage.setItem('token', response.data.token)
+    //}
+    //window.location.replace(window.location.pathname)
     emit('navigate', 'dash')
-
   } catch (error) {
     console.error('Erro na autenticação:', error)
     errorMessage.value = error.response?.data?.message || 'Credenciais inválidas ou erro na conexão.'
@@ -46,6 +49,7 @@ async function handleLogin() {
       <p class="text-text-secondary text-xs mt-1">Insira suas credenciais para verificar seus eventos.</p>
     </div>
 
+    <!-- Alerta de Erro Dinâmico -->
     <div v-if="errorMessage" class="bg-risk-critBg border border-risk-crit/20 text-risk-crit rounded-xl p-3 text-xs text-center mb-4">
       {{ errorMessage }}
     </div>

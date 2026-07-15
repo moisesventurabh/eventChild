@@ -1,17 +1,26 @@
 <script setup>
 import { ref } from 'vue'
+import api from '../services/api'
 
 const emit = defineEmits(['navigate'])
 const email = ref('')
 const isLoading = ref(false)
 const isSent = ref(false)
+const errorMessage = ref('')
 
-function handleReset() {
+async function handleReset() {
   isLoading.value = true
-  setTimeout(() => {
-    isLoading.value = false
+  errorMessage.value = ''
+
+  try {
+    await api.post('/forgot-password', { email: email.value })
     isSent.value = true
-  }, 1000)
+  } catch (error) {
+    console.error('Erro ao solicitar recuperação de senha:', error)
+    errorMessage.value = error.response?.data?.message || 'Não foi possível enviar o link de recuperação. Tente novamente.'
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -33,15 +42,19 @@ function handleReset() {
       ✓ Se este e-mail estiver cadastrado, um link de recuperação foi enviado para a sua caixa de entrada.
     </div>
 
-    <form @submit.prevent="handleReset" class="flex flex-col gap-4">
+    <div v-if="errorMessage" class="bg-risk-critBg border border-risk-crit/20 text-risk-crit rounded-xl p-3 text-xs text-center mb-4">
+      {{ errorMessage }}
+    </div>
+
+    <form v-if="!isSent" @submit.prevent="handleReset" class="flex flex-col gap-4">
       <div class="flex flex-col gap-1.5">
         <label class="text-xs font-semibold text-text-primary">E-mail corporativo</label>
         <input v-model="email" type="email" placeholder="nome@empresa.com" required class="w-full bg-elevated border border-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all" />
       </div>
 
-      <button type="submit" :disabled="isLoading || isSent" class="w-full mt-2 bg-cta-grad text-white font-semibold text-sm py-3 rounded-xl shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+      <button type="submit" :disabled="isLoading" class="w-full mt-2 bg-cta-grad text-white font-semibold text-sm py-3 rounded-xl shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
         <span v-if="isLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-        {{ isLoading ? 'Enviando...' : isSent ? 'E-mail Enviado' : 'Enviar Link de Recuperação' }}
+        {{ isLoading ? 'Enviando...' : 'Enviar Link de Recuperação' }}
       </button>
     </form>
 

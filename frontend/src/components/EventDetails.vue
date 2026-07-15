@@ -89,7 +89,7 @@ onMounted(() => {
   <div class="flex flex-col gap-6 text-white font-roboto antialiased">
     
     <div class="flex items-center justify-between">
-      <button @click="emit('navigate', 'dash')" class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors">
+      <button @click="emit('navigate', 'dash')" class="inline-flex items-center gap-2 text-xs text-slate-100 hover:text-slate-200 transition-colors cursor-pointer mb-6 select-none font-light">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Voltar ao painel
       </button>
