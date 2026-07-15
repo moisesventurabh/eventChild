@@ -23,23 +23,38 @@ class AuthenticatedSessionController extends Controller
             ], 422);
         }
 
-        $user = $request->user();
+        /*$user = $request->user();
         
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Autenticado com sucesso.',
             'token' => $token
+        ], 200);*/
+
+        $request->session()->regenerate();
+
+        return response()->json([
+            'message' => 'Autenticado com sucesso.',
+            'user' => $request->user()
         ], 200);
     }
 
 
     public function destroy(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();
+        
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'message' => 'Logout realizado com sucesso.'
+        ], 200);
+        /*$request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logout realizado com sucesso e token revogado.'
-        ], 200);
+        ], 200);*/
     }
 }

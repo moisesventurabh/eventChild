@@ -4,32 +4,39 @@ import api from '../services/api'
 
 const emit = defineEmits(['navigate'])
 const name = ref('')
-const company = ref('')
 const email = ref('')
 const password = ref('')
+const passwordConfirmation = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
+const fieldErrors = ref({})
 
 async function handleRegister() {
   isLoading.value = true
   errorMessage.value = ''
-  
+  fieldErrors.value = {}
+
   try {
     const response = await api.post('/register', {
       name: name.value,
-      company: company.value,
       email: email.value,
-      password: password.value
+      password: password.value,
+      password_confirmation: passwordConfirmation.value
     })
-    
+
     if (response.data.token) {
       localStorage.setItem('token', response.data.token)
     }
-    
+
     emit('navigate', 'dash')
   } catch (error) {
     console.error('Erro no registro:', error)
-    errorMessage.value = error.response?.data?.message || 'Erro ao criar conta. Verifique os dados.'
+    if (error.response?.status === 422) {
+      fieldErrors.value = error.response.data.errors || {}
+      errorMessage.value = error.response.data.message || 'Verifique os dados informados.'
+    } else {
+      errorMessage.value = 'Erro ao criar conta. Tente novamente.'
+    }
   } finally {
     isLoading.value = false
   }
@@ -55,27 +62,59 @@ async function handleRegister() {
     </div>
 
     <form @submit.prevent="handleRegister" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-text-primary">Nome Completo</label>
+        <input
+          v-model="name"
+          type="text"
+          placeholder="Seu nome"
+          required
+          class="w-full bg-elevated border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all"
+          :class="fieldErrors.name ? 'border-risk-crit' : 'border-line'"
+        />
+        <span v-if="fieldErrors.name" class="text-[11px] text-risk-crit">{{ fieldErrors.name[0] }}</span>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-text-primary">E-mail</label>
+        <input
+          v-model="email"
+          type="email"
+          placeholder="nome@empresa.com"
+          required
+          class="w-full bg-elevated border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all"
+          :class="fieldErrors.email ? 'border-risk-crit' : 'border-line'"
+        />
+        <span v-if="fieldErrors.email" class="text-[11px] text-risk-crit">{{ fieldErrors.email[0] }}</span>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-text-primary">Nome Completo</label>
-          <input v-model="name" type="text" placeholder="Seu nome" required class="w-full bg-elevated border border-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all" />
+          <label class="text-xs font-semibold text-text-primary">Senha</label>
+          <input
+            v-model="password"
+            type="password"
+            placeholder="Mínimo de 8 caracteres"
+            required
+            minlength="8"
+            class="w-full bg-elevated border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all"
+            :class="fieldErrors.password ? 'border-risk-crit' : 'border-line'"
+          />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-text-primary">Empresa/Produtora</label>
-          <input v-model="company" type="text" placeholder="Sua empresa" required class="w-full bg-elevated border border-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all" />
+          <label class="text-xs font-semibold text-text-primary">Confirmar senha</label>
+          <input
+            v-model="passwordConfirmation"
+            type="password"
+            placeholder="Repita a senha"
+            required
+            minlength="8"
+            class="w-full bg-elevated border border-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all"
+          />
         </div>
       </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-text-primary">E-mail corporativo</label>
-        <input v-model="email" type="email" placeholder="nome@empresa.com" required class="w-full bg-elevated border border-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all" />
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-text-primary">Senha</label>
-        <input v-model="password" type="password" placeholder="Mínimo de 8 caracteres" required minlength="8" class="w-full bg-elevated border border-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand-violet focus:bg-surface focus:ring-4 focus:ring-brand-violet/10 transition-all" />
-      </div>
+      <span v-if="fieldErrors.password" class="text-[11px] text-risk-crit -mt-2">{{ fieldErrors.password[0] }}</span>
 
       <button type="submit" :disabled="isLoading" class="w-full mt-2 bg-cta-grad text-white font-semibold text-sm py-3 rounded-xl shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2">
         <span v-if="isLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

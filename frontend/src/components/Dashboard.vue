@@ -123,6 +123,12 @@ onMounted(() => { fetchEvents() })
         <button @click="handleCreateEvent" class="bg-cta-grad text-white font-normal text-xs px-5 py-2.5 rounded-xl shadow-md hover:opacity-95 transition-all flex items-center gap-2">
           <span>+ Novo evento</span>
         </button>
+        <button @click="emit('navigate', 'profile')" title="Meu perfil" class="w-9 h-9 flex items-center justify-center border border-white/10 bg-white/5 hover:bg-white/10 text-orange/80 rounded-xl transition-all">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M20 21C20 17.134 16.418 14 12 14C7.582 14 4 17.134 4 21" stroke-linecap="round"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
         <button @click="handleLogout" class="border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-xs px-4 py-2.5 rounded-xl transition-all font-light">
           Sair
         </button>
