@@ -29,10 +29,6 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        $request->session()->regenerate();
-
         return response()->json([
             'message' => 'Conta criada com sucesso.',
             'user' => $user,

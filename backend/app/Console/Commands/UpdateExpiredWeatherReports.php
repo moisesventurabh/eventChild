@@ -70,10 +70,7 @@ class UpdateExpiredWeatherReports extends Command
                 $this->error("Erro ao atualizar o evento #{$event->id}: {$e->getMessage()}");
                 Log::error("Schedule Weather Update Error for event #{$event->id}: " . $e->getMessage());
 
-                $lastValidReport = $event->weatherReports()
-                    ->where('id', '!=', $event->weatherReports->sortByDesc('id')->first()?->id ?? 0)
-                    ->latest()
-                    ->first();
+                $lastValidReport = $event->weatherReports()->latest()->first();
 
                 if ($lastValidReport) {
                     $event->weatherReports()->create([
@@ -86,7 +83,7 @@ class UpdateExpiredWeatherReports extends Command
                         'risk_score' => $lastValidReport->risk_score,
                         'risk_level' => $lastValidReport->risk_level,
                         'recommendations' => $lastValidReport->recommendations,
-                        'cached_until' => now()->addHours(2), // Renova a sobrevida do dado antigo
+                        'cached_until' => now()->addHours(2),
                         'raw_data' => array_merge($lastValidReport->raw_data ?? [], ['fallback_applied' => true])
                     ]);
 

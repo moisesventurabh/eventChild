@@ -23,10 +23,11 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('message', 'Autenticado com sucesso.');
-
-        $this->assertAuthenticatedAs($user);
+            ->assertJsonPath('message', 'Autenticado com sucesso.')
+            ->assertJsonStructure(['access_token']);
     }
+
+
 
     public function test_users_can_not_authenticate_with_invalid_password()
     {
@@ -49,12 +50,10 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)
+        $response = $this->actingAs($user, 'sanctum')
             ->postJson(route('logout'));
 
         $response->assertStatus(200)
             ->assertJsonPath('message', 'Sessão encerrada com sucesso.');
-
-        $this->assertGuest();
     }
 }

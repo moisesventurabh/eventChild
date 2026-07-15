@@ -260,7 +260,7 @@ onMounted(() => { fetchEvents() })
             </div>
           </div>
 
-          <div v-if="getWeatherAssessment(event)" class="grid grid-cols-3 gap-2 text-xs text-[#6C757D] border-t border-line-soft pt-3 mt-auto font-light">
+          <div v-if="getWeatherAssessment(event)" class="grid grid-cols-3 gap-2 text-md text-[#6C757D] border-t border-line-soft pt-3 mt-auto font-light">
             <div class="flex items-center gap-1">⚡ {{ Math.round(getWeatherAssessment(event).wind_speed) }} km/h</div>
             <div class="flex items-center gap-1">💧 {{ getWeatherAssessment(event).humidity }}%</div>
             <div class="flex items-center gap-1">🌧️ {{ getWeatherAssessment(event).rain_probability }}%</div>

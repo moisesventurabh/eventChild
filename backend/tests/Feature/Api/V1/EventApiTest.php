@@ -172,14 +172,10 @@ class EventApiTest extends TestCase
                 'uv_index' => 8.0,
             ]);
 
-        // Forçamos o Container a cuspir esse mock quando chamarem a classe
         $this->app->instance(\App\Services\Weather\OpenWeatherProvider::class, $weatherMock);
 
         $response = $this->actingAs($user)
             ->postJson("/api/v1/events/{$event->id}/refresh");
-
-        // Se falhar de novo, remova o comentário abaixo para ver a real mensagem de erro do controller
-        // $response->dump();
 
         $response->assertStatus(200)
             ->assertJsonPath('message', 'Relatório climático atualizado com sucesso.');
